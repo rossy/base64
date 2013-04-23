@@ -1,0 +1,143 @@
+<!doctype html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+	<meta name="description" content="Generate base64 encoded Data URLs from files on your computer.">
+	<title>Data URL generator</title>
+	<style>
+html, body {
+	height: 100%;
+}
+
+body {
+	font: 12px/14px Monaco, Consolas, monospace;
+
+	background-color: #1d1f21;
+	color: #c5c8c6;
+
+	margin: 0;
+	padding: 4px 5px;
+	box-sizing: border-box;
+
+	word-break: break-all;
+	overflow-wrap: break-word;
+}
+
+a {
+	color: #81a2be;
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+.scheme    { color: #de935f; }
+.mediatype { color: #b5bd68; }
+.base64    { color: #b294bb; }
+.data      { color: #81a2be; }
+.equals    { color: #969896; }
+
+::selection {
+	color: inherit;
+	background-color: rgba(55, 59, 65, 0.99);
+}
+
+::-moz-selection {
+	color: inherit;
+	background-color: rgba(55, 59, 65, 0.99);
+}
+
+@media print {
+	* {
+		background: transparent !important;
+		color: #000 !important;
+	}
+}
+	</style>
+</head>
+<body><span id="content">Please enable JavaScript to use this tool.</span><script>
+(function() {
+	"use strict";
+
+	var content = document.getElementById("content");
+
+	if (!("ondrop" in document.body) || !window.FileReader || !("readAsDataURL" in new window.FileReader()))
+	{
+		content.innerHTML =
+			"Your browser is outdated. To use this tool, please install the latest version of " +
+			"<a href=\"http://firefox.com\" target=\"_blank\">Mozilla Firefox</a>, " +
+			"<a href=\"https://chrome.com\" target=\"_blank\">Google Chrome</a> or " +
+			"<a href=\"http://ie.microsoft.com\" target=\"_blank\">Internet Explorer</a>.";
+
+		if (/*@cc_on!@*/false)
+			content.innerHTML +=
+				"<br><br>If you don't want to change your web browser, you can also use this tool with " +
+				"<a href=\"https://www.google.com/chromeframe\" target=\"_blank\">Google Chrome Frame</a>.";
+
+		return;
+	}
+	else
+		content.innerHTML = "Drop files here to generate a data URL.";
+
+	function createSpan(className, text)
+	{
+		var span = document.createElement("span");
+		span.className = className;
+		span.appendChild(document.createTextNode(text));
+
+		return span;
+	}
+
+	document.body.addEventListener("dragover", function(e) {
+		e.preventDefault();
+		e.dataTransfer.dropEffect = "copy";
+	}, false);
+
+	document.body.addEventListener("drop", function(e) {
+		if (!e.dataTransfer.files.length)
+			return;
+
+		e.preventDefault();
+
+		var reader = new FileReader();
+
+		reader.readAsDataURL(e.dataTransfer.files[0]);
+		reader.addEventListener("loadend", function(e) {
+			var url;
+
+			if (typeof reader.result !== "string" || !(url = reader.result.match(/^data:(.*?)(;base64)?(?:,(.*?)(=*))?$/)))
+			{
+				content.innerHTML = "Error reading file.";
+				return;
+			}
+
+			content.innerHTML = "";
+
+			content.appendChild(createSpan("scheme", "data:"));
+			content.appendChild(createSpan("mediatype", url[1] || "application/octet-stream"));
+			if (url[2])
+			{
+				content.appendChild(createSpan("mediatype", ";"));
+				content.appendChild(createSpan("base64", "base64,"));
+			}
+			else
+				content.appendChild(createSpan("mediatype", ","));
+			if (url[3])
+			{
+				content.appendChild(createSpan("data", url[3]));
+				content.appendChild(createSpan("equals", url[4]));
+			}
+
+			var range = document.createRange();
+			range.selectNodeContents(content);
+
+			var selection = window.getSelection();
+			selection.removeAllRanges();
+			selection.addRange(range);
+		}, false);
+	}, false);
+})();
+	</script></body>
+</html>
