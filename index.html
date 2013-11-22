@@ -1,10 +1,11 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
 	<meta charset="utf-8">
 	<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-	<meta name="description" content="Generate base64 encoded Data URLs from files on your computer.">
-	<title>Data URL generator</title>
+	<meta name="description" content="Generate base64 encoded data URIs from files on your computer">
+	<link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgAgMAAAAOFJJnAAAADFBMVEUAAAAtLS0tLS0tLS0PFSQuAAAABHRSTlMA+jaakgZ7swAAAJBJREFUGJWdz6ERwkAYROFHohCRlBCDvz5WsNxNJuIaYCYl0MTvkTQQDU2kj3QAIpMCYNU3s+rBf0sZ2s9KY1c6i6Nd6C16eyJZpDy/CYsoLXgRywSNQ7g+OOST8C3TXUPYrv1lg1IJ4ewSigFPaVxs49pvWHbEfp3GKOdnDCRbEKKzK4Ro7TuEYB6B1/pT5xcCqDaYG4+V+gAAAABJRU5ErkJggg==">
+	<title>Data URI generator</title>
 	<style>
 html, body {
 	height: 100%;
@@ -13,8 +14,8 @@ html, body {
 body {
 	font: 12px/14px Monaco, Consolas, monospace;
 
-	background-color: #1d1f21;
-	color: #c5c8c6;
+	background-color: #2d2d2d;
+	color: #d3d0c8;
 
 	margin: 0;
 	padding: 4px 5px;
@@ -25,7 +26,7 @@ body {
 }
 
 a {
-	color: #81a2be;
+	color: #f2f0ec;
 	text-decoration: none;
 }
 
@@ -33,20 +34,20 @@ a:hover {
 	text-decoration: underline;
 }
 
-.scheme    { color: #de935f; }
-.mediatype { color: #b5bd68; }
-.base64    { color: #b294bb; }
-.data      { color: #81a2be; }
-.equals    { color: #969896; }
+.scheme    { color: #f99157; }
+.mediatype { color: #99cc99; }
+.base64    { color: #cc99cc; }
+.data      { color: #6699cc; }
+.equals    { color: #747369; }
 
 ::selection {
 	color: inherit;
-	background-color: rgba(55, 59, 65, 0.99);
+	background-color: rgba(81, 81, 81, 0.996);
 }
 
 ::-moz-selection {
 	color: inherit;
-	background-color: rgba(55, 59, 65, 0.99);
+	background-color: rgba(81, 81, 81, 0.996);
 }
 
 @media print {
@@ -57,35 +58,38 @@ a:hover {
 }
 	</style>
 </head>
-<body><span id="content">Please enable JavaScript to use this tool.</span><script>
+<body><span id="content">Please enable JavaScript to use this tool</span><script>
 (function() {
 	"use strict";
 
 	var content = document.getElementById("content");
 
-	if (!("ondrop" in document.body) || !window.FileReader || !("readAsDataURL" in new window.FileReader()))
-	{
+	if (!("ondrop" in document.body)
+	     || !window.FileReader
+	     || !("readAsDataURL" in new window.FileReader())) {
+
+		var win = /Win/i.test(navigator.platform),
+		    ie = win && /*@cc_on!@*/false;
+
 		content.innerHTML =
 			"Your browser is outdated. To use this tool, please install the latest version of " +
-			"<a href=\"http://firefox.com\" target=\"_blank\">Mozilla Firefox</a>, " +
-			"<a href=\"https://chrome.com\" target=\"_blank\">Google Chrome</a> or " +
-			"<a href=\"http://ie.microsoft.com\" target=\"_blank\">Internet Explorer</a>.";
-
-		if (/*@cc_on!@*/false)
-			content.innerHTML +=
-				"<br><br>If you don't want to change your web browser, you can also use this tool with " +
-				"<a href=\"https://www.google.com/chromeframe\" target=\"_blank\">Google Chrome Frame</a>.";
-
+			"<a href=\"http://firefox.com\" target=\"_blank\">Mozilla Firefox</a>" +
+			(win ? ", " : " or ") +
+			"<a href=\"https://chrome.com\" target=\"_blank\">Google Chrome</a>" +
+			(win ? " or <a href=\"http://ie.microsoft.com\" target=\"_blank\">Internet Explorer</a>."
+			     : ".") +
+			(ie ? "<br><br>If you don't want to change your web browser, you can also use this tool with " +
+			      "<a href=\"https://www.google.com/chromeframe\" target=\"_blank\">Google Chrome Frame</a>."
+			    : "");
 		return;
 	}
-	else
-		content.innerHTML = "Drop files here to generate a data URL.";
 
-	function createSpan(className, text)
-	{
+	content.innerHTML = "Drop files here to generate a base64 data URI";
+
+	function createSpan(className, text) {
 		var span = document.createElement("span");
 		span.className = className;
-		span.appendChild(document.createTextNode(text));
+		span.textContent = text;
 
 		return span;
 	}
@@ -96,38 +100,32 @@ a:hover {
 	}, false);
 
 	document.body.addEventListener("drop", function(e) {
-		if (!e.dataTransfer.files.length)
-			return;
+		var file = e.dataTransfer.files[0],
+		    reader = new FileReader();
 
-		e.preventDefault();
+		if (!file) return;
 
-		var reader = new FileReader();
+		reader.addEventListener("loadend", function() {
+			var result = ""+reader.result,
+			    uri = result.match(/^data:(.*?)(;base64)?(?:,(.*?)(=*))?$/);
 
-		reader.readAsDataURL(e.dataTransfer.files[0]);
-		reader.addEventListener("loadend", function(e) {
-			var url;
-
-			if (typeof reader.result !== "string" || !(url = reader.result.match(/^data:(.*?)(;base64)?(?:,(.*?)(=*))?$/)))
-			{
-				content.innerHTML = "Error reading file.";
+			if (!uri) {
+				content.innerHTML = "Error reading file";
 				return;
 			}
 
 			content.innerHTML = "";
 
 			content.appendChild(createSpan("scheme", "data:"));
-			content.appendChild(createSpan("mediatype", url[1] || "application/octet-stream"));
-			if (url[2])
-			{
+			content.appendChild(createSpan("mediatype", uri[1] || "application/octet-stream"));
+			if (uri[2]) {
 				content.appendChild(createSpan("mediatype", ";"));
 				content.appendChild(createSpan("base64", "base64,"));
-			}
-			else
+			} else
 				content.appendChild(createSpan("mediatype", ","));
-			if (url[3])
-			{
-				content.appendChild(createSpan("data", url[3]));
-				content.appendChild(createSpan("equals", url[4]));
+			if (uri[3]) {
+				content.appendChild(createSpan("data", uri[3]));
+				content.appendChild(createSpan("equals", uri[4]));
 			}
 
 			var range = document.createRange();
@@ -137,6 +135,9 @@ a:hover {
 			selection.removeAllRanges();
 			selection.addRange(range);
 		}, false);
+
+		reader.readAsDataURL(file);
+		e.preventDefault();
 	}, false);
 })();
 	</script></body>
